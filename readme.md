@@ -1,14 +1,16 @@
-##Extract-macro
+## Extract-macro
 
-This PS script will take extract the macro code from the xls file.  
+This PS script will extract the macro code from the xls file.  
 
 **Dependencies**  
-MS office 2013 or greater  
+MS Office 2013 or greater  
+Administrator privileges  
 
 **Tested on**  
-MS office 2013  
+MS Office 2013  
+MS Office 2016  
 
-**Usage**
+**Usage**  
 PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
 
 **TODO**
