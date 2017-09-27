@@ -1,6 +1,9 @@
-## Extract-macro
+## Extract-Macro
 
-This PS script will extract the macro code from the xls file.  
+This PS script will extract macro from Excel and Word files.  
+
+**Version**  
+0.2
 
 **Dependencies**  
 MS Office 2013 or greater  
@@ -10,13 +13,18 @@ Administrator privileges
 MS Office 2013  
 MS Office 2016  
 
+**Supported file types**  
+xls,xlsm,doc,docm (haven't checked for others, may work)  
+
 **Usage**  
-PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
+PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls  
 
-**TODO**
-- Add support for doc files
+**TODO**  
+- [x] Add support for doc files  
+- [ ] Add usual malicious macro checks  
+- [ ] Improve Error Handling  
 
-Sample Run 
+**Sample Run**   
 
 	PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
 	======== Macro Code Start ============
@@ -31,4 +39,7 @@ Sample Run
 	End If
 	End Sub
 	======== Macro Code End ============
+
+**References**  
+https://github.com/enigma0x3/Generate-Macro/blob/master/Generate-Macro.ps1
 
