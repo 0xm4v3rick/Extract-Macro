@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-PS script to extract macro to from Excel and Word files. Also checks the macro for suspecious/malicious code patterns
+PS script to extract macro to from Excel and Word files. Also checks the macro for suspecious code patterns
 
 .DESCRIPTION
 This script will take Excel/Word file as input and extract macro code if any.
@@ -35,7 +35,10 @@ function Word {
         $WordVersion = $Word.Version
         $Word.Visible = $False 
         $Word.DisplayAlerts = "wdAlertsNone"
-
+        
+        $Word.Selection.InsertFormula("test")
+        Write-Host "======== Done! Quiting...." -foregroundcolor "green"
+        exit
         #Disable Macro Security
         New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\Word\Security" -Name AccessVBOM -PropertyType DWORD -Value 1 -Force | Out-Null
         New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\Word\Security" -Name VBAWarnings -PropertyType DWORD -Value 1 -Force | Out-Null
@@ -53,7 +56,7 @@ function Word {
                     Write-Host "======== Macro Code End ============" -foregroundcolor "green"
     
                     # Detecting malicous code in the Macro
-                    Detection($code)
+                    #Detection($code)
 
                 }
         }
@@ -177,10 +180,72 @@ function Detection($vba){
 
 }
 
+function DDECheck{
+    $DocumentFullPathName=$file
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    # This function unzips a zip file -- and it works on MS Office files directly: no need to
+    # rename them from foo.xlsx to foo.zip. It expects the full path name of the zip file
+    # and the path name for the unzipped files
+    function Unzip
+    {
+        param([string]$zipfile, [string]$outpath)
+
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath) *>$null
+    }
+
+    # Compose the name of the folder where we will unzip files
+    $zipDirectoryName = $env:TEMP + "\" + "TempZip"
+
+    # delete the zip directory if present
+    remove-item $zipDirectoryName -force -recurse -ErrorAction Ignore | out-null
+
+    # create the zip directory
+    New-Item -ItemType directory -Path $zipDirectoryName | out-null
+
+    # Unzip the files -- i.e. extract the xml files embedded within the MS Office document
+    unzip $DocumentFullPathName $zipDirectoryName
+
+    # get the docProps\core.xml file as [xml]
+    $coreXmlName = $zipDirectoryName + "\word\document.xml"
+    $coreXml = get-content -path $coreXmlName
+    $a=$coreXml -replace '<.+?>',"`n"
+    $str=$a[1].split("`n")
+    $start=0
+    $dde="DDE*"
+    $end="Error! No topic specified*"
+    foreach($s in $str){
+        if(($s -like $dde) -or ($start -eq 1)){
+            $start=1
+            if ($s -like $end){
+            break
+            }
+            else{
+                if($s -eq "`r"){
+                }
+                else{
+                    $payload = $payload + $s
+                }
+            }
+        }
+     }
+
+
+        Write-Host "======== DDE Code Start ============" -foregroundcolor "green"
+        $payload 
+        Write-Host "======== DDE Code End ============" -foregroundcolor "green"
+
+
+        #clean up
+        remove-item $zipDirectoryName -force -recurse
+}
+
 $extn = [IO.Path]::GetExtension($file)
-if (($extn -eq ".doc") -or ($extn -eq ".docm"))
+if (($extn -eq ".doc") -or ($extn -eq ".docm") -or ($extn -eq ".docx"))
 {
     Word
+    DDECheck
 }
 elseif(($extn -eq ".xls") -or ($extn -eq ".xlsm"))
 {

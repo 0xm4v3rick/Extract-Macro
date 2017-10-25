@@ -1,6 +1,7 @@
 ## Extract-Macro
 
-This PS script will extract macro from Excel and Word files.Also checks the macro for suspecious code patterns  
+This PS script will extract macro from Excel and Word files. Also checks the macro for suspecious code patterns  
+Includes temporary DDE check for word documents.  
 
 **Version**  
 0.3
@@ -14,7 +15,7 @@ MS Office 2013
 MS Office 2016  
 
 **Supported file types**  
-xls,xlsm,doc,docm (haven't checked for others, may work)  
+xls,xlsm,doc,docm,docx (haven't checked for others, may work)  
 
 **Usage**  
 PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls  
@@ -24,6 +25,7 @@ PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
 - [ ] Adding more malicious/suspecious macro checks  
 - [x] Improve Error Handling  
 - [ ] Decoding and checking base64 encoded strings for patterns  
+- [ ] Improving DDE check feature for word  
 
 **Sample Run**   
 
