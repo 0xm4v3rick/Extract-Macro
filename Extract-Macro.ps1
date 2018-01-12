@@ -133,7 +133,7 @@ function Excel{
 
 function Detection($vba){
 
-    $keywords = @{"chr\(" = "Use of Char encoding";"Shell"="Use of shell function";"schtasks"="scheduled tasks invocation. Possible backdoor";"Document_Open"="Auto run macro Document_Open";"(?i:auto_open)"="Auto run macro Auto_Open";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)?"="base64 encoded strings [false positive prone]";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)"="base64 encoded strings [Confirmed]"}
+    $keywords = @{"chr\(" = "Use of Char encoding";"Shell"="Use of shell function";"schtasks"="scheduled tasks invocation. Possible backdoor";"Document_Open"="Auto run macro Document_Open";"(?i:auto_open)"="Auto run macro Auto_Open";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)?"="base64 encoded strings [false positive prone]";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)"="base64 encoded strings [Confirmed]";"WinHttp"="HTTP Request modules used";"(WinHttp|XMLHTTP)"="HTTP Request modules used";"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"="URL detected - Probable data transfer";'("(\s)*&(\s)*")'="string concatination for AV evasion";"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"="IP Address - Possible Data transfer"}
     
     $tabName = "SampleTable"
 
@@ -154,9 +154,7 @@ function Detection($vba){
         
         $value = $keywords[$keyword]
         $Matches = Select-String -InputObject $vba -Pattern $keyword -AllMatches
-        if($keyword.StartsWith("base64")){
-        Write-Host "========  base64 found will evaluate further ============"
-        }
+
         #Write-Host "========  $keyword count ============"
         #$Matches.Matches.Count
         #$Matches

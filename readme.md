@@ -8,7 +8,7 @@ Includes temporary DDE check for word documents.
 
 **Dependencies**  
 MS Office 2013 or greater  
-Administrator privileges  
+
 
 **Tested on**  
 MS Office 2013  
