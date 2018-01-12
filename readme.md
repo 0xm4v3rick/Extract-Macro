@@ -27,7 +27,7 @@ PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
 - [ ] Decoding and checking base64 encoded strings for patterns  
 - [ ] Improving DDE check feature for word  
 
-**Sample Run**   
+**Sample Run 1**   
 
 	PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
 	======== Macro Code Start ============
@@ -68,12 +68,12 @@ PS C:\> ./Extract-macro.ps1 C:\Sheet1.xls
         base64 encoded strings [false positive prone] 46   
         Auto run macro Document_Open                  0    
 
+**Sample Run 2**   
 
-
-        PS C:\> ./Extract-macro.ps1 C:\dde.docx        
-        ======== DDE Code Start ============
-        DDEAUTO c:\\windows\\system32\\cmd.exe "/k calc.exe" !Unexpected End of Formula
-        ======== DDE Code End ============   
+	PS C:\> ./Extract-macro.ps1 C:\dde.docx        
+	======== DDE Code Start ============
+	DDEAUTO c:\\windows\\system32\\cmd.exe "/k calc.exe" !Unexpected End of Formula
+	======== DDE Code End ============   
 
 **References**  
 https://github.com/enigma0x3/Generate-Macro/blob/master/Generate-Macro.ps1
