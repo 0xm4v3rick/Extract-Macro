@@ -35,10 +35,7 @@ function Word {
         $WordVersion = $Word.Version
         $Word.Visible = $False 
         $Word.DisplayAlerts = "wdAlertsNone"
-        
-        $Word.Selection.InsertFormula("test")
-        Write-Host "======== Done! Quiting...." -foregroundcolor "green"
-        exit
+
         #Disable Macro Security
         New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\Word\Security" -Name AccessVBOM -PropertyType DWORD -Value 1 -Force | Out-Null
         New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\Word\Security" -Name VBAWarnings -PropertyType DWORD -Value 1 -Force | Out-Null
@@ -56,7 +53,7 @@ function Word {
                     Write-Host "======== Macro Code End ============" -foregroundcolor "green"
     
                     # Detecting malicous code in the Macro
-                    #Detection($code)
+                    Detection($code)
 
                 }
         }
@@ -136,7 +133,7 @@ function Excel{
 
 function Detection($vba){
 
-    $keywords = @{"chr\(" = "Use of Char encoding";"Shell"="Use of shell function";"schtasks"="scheduled tasks invocation. Possible backdoor";"Document_Open"="Auto run macro Document_Open";"Auto_Open"="Auto run macro Auto_Open";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)?"="base64 encoded strings [false positive prone]";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)"="base64 encoded strings [Confirmed]"}
+    $keywords = @{"chr\(" = "Use of Char encoding";"Shell"="Use of shell function";"schtasks"="scheduled tasks invocation. Possible backdoor";"Document_Open"="Auto run macro Document_Open";"(?i:auto_open)"="Auto run macro Auto_Open";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)?"="base64 encoded strings [false positive prone]";"(?:[A-Za-z0-9+/]{4}){1,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)"="base64 encoded strings [Confirmed]"}
     
     $tabName = "SampleTable"
 
@@ -157,6 +154,9 @@ function Detection($vba){
         
         $value = $keywords[$keyword]
         $Matches = Select-String -InputObject $vba -Pattern $keyword -AllMatches
+        if($keyword.StartsWith("base64")){
+        Write-Host "========  base64 found will evaluate further ============"
+        }
         #Write-Host "========  $keyword count ============"
         #$Matches.Matches.Count
         #$Matches
@@ -181,70 +181,82 @@ function Detection($vba){
 }
 
 function DDECheck{
-    $DocumentFullPathName=$file
+    Try{  
+        $DocumentFullPathName=$file
 
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-    # This function unzips a zip file -- and it works on MS Office files directly: no need to
-    # rename them from foo.xlsx to foo.zip. It expects the full path name of the zip file
-    # and the path name for the unzipped files
-    function Unzip
-    {
-        param([string]$zipfile, [string]$outpath)
+        # This function unzips a zip file -- and it works on MS Office files directly: no need to
+        # rename them from foo.xlsx to foo.zip. It expects the full path name of the zip file
+        # and the path name for the unzipped files
+        function Unzip
+        {
+            param([string]$zipfile, [string]$outpath)
 
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath) *>$null
-    }
+            [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath) *>$null
+        }
 
-    # Compose the name of the folder where we will unzip files
-    $zipDirectoryName = $env:TEMP + "\" + "TempZip"
+        # Compose the name of the folder where we will unzip files
+        $zipDirectoryName = $env:TEMP + "\" + "TempZip"
 
-    # delete the zip directory if present
-    remove-item $zipDirectoryName -force -recurse -ErrorAction Ignore | out-null
+        # delete the zip directory if present
+        remove-item $zipDirectoryName -force -recurse -ErrorAction Ignore | out-null
 
-    # create the zip directory
-    New-Item -ItemType directory -Path $zipDirectoryName | out-null
+        # create the zip directory
+        New-Item -ItemType directory -Path $zipDirectoryName | out-null
 
-    # Unzip the files -- i.e. extract the xml files embedded within the MS Office document
-    unzip $DocumentFullPathName $zipDirectoryName
+        # Unzip the files -- i.e. extract the xml files embedded within the MS Office document
+        unzip $DocumentFullPathName $zipDirectoryName
 
-    # get the docProps\core.xml file as [xml]
-    $coreXmlName = $zipDirectoryName + "\word\document.xml"
-    $coreXml = get-content -path $coreXmlName
-    $a=$coreXml -replace '<.+?>',"`n"
-    $str=$a[1].split("`n")
-    $start=0
-    $dde="DDE*"
-    $end="Error! No topic specified*"
-    foreach($s in $str){
-        if(($s -like $dde) -or ($start -eq 1)){
-            $start=1
-            if ($s -like $end){
-            break
-            }
-            else{
-                if($s -eq "`r"){
+        # get the docProps\core.xml file as [xml]
+        $coreXmlName = $zipDirectoryName + "\word\document.xml"
+        $coreXml = get-content -path $coreXmlName
+        $a=$coreXml -replace '<.+?>',"`n"
+        $str=$a[1].split("`n")
+        $start=0
+        $dde="DDE*"
+        $end="Error! No topic specified*"
+        foreach($s in $str){
+            if(($s -like $dde) -or ($start -eq 1)){
+                $start=1
+                if ($s -like $end){
+                break
                 }
                 else{
-                    $payload = $payload + $s
+                    if($s -eq "`r"){
+                    }
+                    else{
+                        $payload = $payload + $s
+                    }
                 }
             }
-        }
-     }
+    }
 
 
-        Write-Host "======== DDE Code Start ============" -foregroundcolor "green"
-        $payload 
-        Write-Host "======== DDE Code End ============" -foregroundcolor "green"
+    Write-Host "======== DDE Code Start ============" -foregroundcolor "green"
+    $payload 
+    Write-Host "======== DDE Code End ============" -foregroundcolor "green"
 
 
-        #clean up
-        remove-item $zipDirectoryName -force -recurse
+    #clean up
+    remove-item $zipDirectoryName -force -recurse
+    }
+    Catch
+    {
+        $ErrorMessage = $_.Exception.Message
+        $ErrorMessage
+        $FailedItem = $_.Exception.ItemName
+        $FailedItem
+    }
 }
 
 $extn = [IO.Path]::GetExtension($file)
-if (($extn -eq ".doc") -or ($extn -eq ".docm") -or ($extn -eq ".docx"))
+if (($extn -eq ".doc") -or ($extn -eq ".docm"))
 {
     Word
+}
+elseif(($extn -eq ".docx"))
+{
     DDECheck
 }
 elseif(($extn -eq ".xls") -or ($extn -eq ".xlsm"))
