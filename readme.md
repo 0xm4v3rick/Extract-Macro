@@ -3,6 +3,10 @@
 This PS script will extract macro from Excel and Word files. Also checks the macro for suspecious code patterns  
 Includes temporary DDE check for word documents.  
 
+> [!CAUTION]
+> I have not tested this but use this script at your own risk.    
+> Refer issue https://github.com/0xm4v3rick/Extract-Macro/issues/1 for more details 
+
 **Version**  
 0.4
 
